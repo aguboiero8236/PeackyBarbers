@@ -26,7 +26,10 @@ const generateDates = (): Date[] => {
   for (let i = 0; i < 14; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
-    dates.push(date);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      dates.push(date);
+    }
   }
   return dates;
 };

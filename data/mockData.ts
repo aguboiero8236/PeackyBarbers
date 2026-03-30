@@ -1,5 +1,5 @@
 import { AppointmentSlot } from '../types';
-import { saveBooking, getAllBookings } from '../services/bookingService';
+import { saveBooking, getAllBookings, cancelBooking } from '../services/bookingService';
 
 const TIME_SLOTS = ['17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
 
@@ -23,6 +23,12 @@ const generateSlots = (): AppointmentSlot[] => {
   for (let day = 0; day < 14; day++) {
     const date = new Date(today);
     date.setDate(today.getDate() + day);
+    const dayOfWeek = date.getDay();
+    
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      continue;
+    }
+    
     const dateStr = formatDate(date);
     
     TIME_SLOTS.forEach((time, index) => {
@@ -74,6 +80,24 @@ export const bookSlot = async (slotId: string, name: string, phone: string): Pro
       isBooked: true,
       bookedBy: { name, phone },
     };
+    return true;
+  }
+  
+  return false;
+};
+
+export const cancelSlot = async (slotId: string): Promise<boolean> => {
+  const success = await cancelBooking(slotId);
+  
+  if (success) {
+    const slotIndex = appointmentSlots.findIndex(s => s.id === slotId);
+    if (slotIndex !== -1) {
+      appointmentSlots[slotIndex] = {
+        ...appointmentSlots[slotIndex],
+        isBooked: false,
+        bookedBy: undefined,
+      };
+    }
     return true;
   }
   

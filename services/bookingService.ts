@@ -1,4 +1,4 @@
-import { addDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { addDoc, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { bookingsCollection } from '../firebase';
 import { AppointmentSlot, BookingData } from '../types';
 
@@ -43,5 +43,25 @@ export const getAllBookings = async (): Promise<AppointmentSlot[]> => {
   } catch (error) {
     console.error('Error getting bookings:', error);
     return [];
+  }
+};
+
+export const cancelBooking = async (slotId: string): Promise<boolean> => {
+  try {
+    const q = query(bookingsCollection);
+    const querySnapshot = await getDocs(q);
+    
+    for (const docSnapshot of querySnapshot.docs) {
+      const data = docSnapshot.data();
+      if (data.slotId === slotId) {
+        await deleteDoc(doc(bookingsCollection, docSnapshot.id));
+        return true;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error canceling booking:', error);
+    return false;
   }
 };

@@ -8,13 +8,14 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Modal,
   Image,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList, AppointmentSlot } from '../types';
 import { getAllBookings } from '../services/bookingService';
-import { formatDate, formatDisplayDate } from '../data/mockData';
+import { formatDate, formatDisplayDate, cancelSlot } from '../data/mockData';
 
 type AdminScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Admin'>;
@@ -47,6 +48,8 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
   const [bookings, setBookings] = useState<AppointmentSlot[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelItem, setCancelItem] = useState<AppointmentSlot | null>(null);
 
   const bookedDates = useMemo(() => {
     const uniqueDates = [...new Set(bookings.map(b => b.date))];
@@ -101,7 +104,8 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
 
   const renderDate = (dateStr: string) => {
     const isSelected = dateStr === selectedDate;
-    const dateObj = new Date(dateStr);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day);
     
     return (
       <TouchableOpacity
@@ -120,14 +124,44 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     return bookings.filter(booking => booking.date === selectedDate);
   }, [bookings, selectedDate, refreshKey]);
 
+  const handleCancelBooking = useCallback((item: AppointmentSlot) => {
+    setCancelItem(item);
+    setShowCancelModal(true);
+  }, []);
+
+  const confirmCancelBooking = useCallback(async () => {
+    if (!cancelItem) return;
+    
+    setShowCancelModal(false);
+    
+    const success = await cancelSlot(cancelItem.id);
+    if (success) {
+      const data = await getAllBookings();
+      setBookings(data);
+    } else {
+      Alert.alert('Error', 'No se pudo cancelar la reserva');
+    }
+    
+    setCancelItem(null);
+  }, [cancelItem]);
+
   const renderBooking = ({ item }: { item: AppointmentSlot }) => {
     return (
-      <View style={[styles.slotButton, styles.slotButtonBooked]}>
-        <Text style={styles.slotTime}>{formatTime(item.time)}</Text>
-        <Text style={styles.slotStatus}>
-          {item.bookedBy?.name || 'Reservado'} - {item.bookedBy?.phone || ''}
-        </Text>
-      </View>
+      <TouchableOpacity 
+        style={[styles.slotButton, styles.slotButtonBooked]}
+        onPress={() => handleCancelBooking(item)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.bookingInfo}>
+          <Text style={styles.slotTime}>{formatTime(item.time)}</Text>
+          <Text style={styles.slotStatus}>
+            {item.bookedBy?.name || 'Reservado'} - {item.bookedBy?.phone || ''}
+          </Text>
+        </View>
+        <View style={styles.cancelButton}>
+          <Text style={styles.cancelButtonText}>✕</Text>
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -185,6 +219,36 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
           <Text style={styles.noSlots}>No hay reservas</Text>
         }
       />
+
+      <Modal
+        visible={showCancelModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCancelModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Cancelar Reserva</Text>
+            <Text style={styles.modalText}>
+              Cancelar reserva de {cancelItem?.bookedBy?.name || 'este cliente'}?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowCancelModal(false)}
+              >
+                <Text style={styles.modalButtonCancelText}>No</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={confirmCancelBooking}
+              >
+                <Text style={styles.modalButtonConfirmText}>Si</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -288,6 +352,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#222',
     borderColor: '#333',
     opacity: 0.8,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   slotTime: {
     fontSize: 18,
@@ -298,10 +364,81 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
   },
+  bookingInfo: {
+    flex: 1,
+  },
+  cancelButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e74c3c',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   noSlots: {
     textAlign: 'center',
     color: '#666',
     fontSize: 16,
     marginTop: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 16,
+    padding: 24,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#ccc',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#444',
+    marginRight: 8,
+  },
+  modalButtonCancelText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#e74c3c',
+    marginLeft: 8,
+  },
+  modalButtonConfirmText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
