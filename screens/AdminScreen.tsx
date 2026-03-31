@@ -73,10 +73,12 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
 
   const loadBookings = async () => {
     const data = await getAllBookings();
-    setBookings(data);
+    const today = new Date().toISOString().split('T')[0];
+    const filteredData = data.filter(b => b.date >= today);
+    setBookings(filteredData);
     
-    if (data.length > 0) {
-      const uniqueDates = [...new Set(data.map(b => b.date))];
+    if (filteredData.length > 0) {
+      const uniqueDates = [...new Set(filteredData.map(b => b.date))];
       const filteredDates = uniqueDates.filter(dateStr => {
         const [year, month, day] = dateStr.split('-').map(Number);
         const date = new Date(year, month - 1, day);
@@ -136,7 +138,8 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     
     const success = await cancelSlot(cancelItem.id);
     if (success) {
-      const data = await getAllBookings();
+      const today = new Date().toISOString().split('T')[0];
+      const data = (await getAllBookings()).filter(b => b.date >= today);
       setBookings(data);
     } else {
       Alert.alert('Error', 'No se pudo cancelar la reserva');

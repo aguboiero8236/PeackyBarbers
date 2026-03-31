@@ -1,6 +1,6 @@
 export const es = {
   home: {
-    title: "Peacky Barbers",
+    title: "Peaky Barbers",
     subtitle: 'Selecciona fecha y hora',
     available: 'Disponible',
     booked: 'Ocupado',
