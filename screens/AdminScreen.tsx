@@ -21,7 +21,7 @@ type AdminScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Admin'>;
 };
 
-const ADMIN_PIN = '1234';
+const ADMIN_PIN = '0212';
 
 const generateDates = (): Date[] => {
   const dates: Date[] = [];
