@@ -188,7 +188,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
             secureTextEntry
             maxLength={4}
             placeholder="****"
-            placeholderTextColor="#666"
+            placeholderTextColor="#64748b"
           />
           <TouchableOpacity style={styles.pinButton} onPress={handlePinSubmit}>
             <Text style={styles.pinButtonText}>Ingresar</Text>
@@ -259,7 +259,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#0f172a',
   },
   header: {
     padding: 20,
@@ -268,14 +268,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
-    color: '#d4af37',
+    color: '#3b82f6',
     fontSize: 16,
     marginRight: 16,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#d4af37',
+    color: '#3b82f6',
   },
   pinContainer: {
     flex: 1,
@@ -291,23 +291,23 @@ const styles = StyleSheet.create({
   pinInput: {
     width: 200,
     height: 60,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
     color: '#fff',
     fontSize: 24,
     textAlign: 'center',
     marginBottom: 20,
   },
   pinButton: {
-    backgroundColor: '#d4af37',
+    backgroundColor: '#3b82f6',
     paddingHorizontal: 40,
     paddingVertical: 14,
     borderRadius: 12,
   },
   pinButtonText: {
-    color: '#1a1a1a',
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -320,13 +320,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginRight: 8,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
   },
   dateButtonSelected: {
-    backgroundColor: '#d4af37',
-    borderColor: '#d4af37',
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
   },
   dateText: {
     fontSize: 14,
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   dateTextSelected: {
-    color: '#1a1a1a',
+    color: '#fff',
   },
   slotsContainer: {
     paddingHorizontal: 16,
@@ -347,13 +347,13 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderRadius: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
   },
   slotButtonBooked: {
-    backgroundColor: '#222',
-    borderColor: '#333',
+    backgroundColor: '#1e293b',
+    borderColor: '#334155',
     opacity: 0.8,
     flexDirection: 'row',
     alignItems: 'center',
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#e74c3c',
+    backgroundColor: '#ef4444',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   },
   noSlots: {
     textAlign: 'center',
-    color: '#666',
+    color: '#64748b',
     fontSize: 16,
     marginTop: 40,
   },
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderRadius: 16,
     padding: 24,
     width: '80%',
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontSize: 16,
-    color: '#ccc',
+    color: '#cbd5e1',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalButtonCancel: {
-    backgroundColor: '#444',
+    backgroundColor: '#475569',
     marginRight: 8,
   },
   modalButtonCancelText: {
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   modalButtonConfirm: {
-    backgroundColor: '#e74c3c',
+    backgroundColor: '#ef4444',
     marginLeft: 8,
   },
   modalButtonConfirmText: {

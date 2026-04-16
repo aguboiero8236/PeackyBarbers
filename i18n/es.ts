@@ -1,6 +1,6 @@
 export const es = {
   home: {
-    title: "Peaky Barbers",
+    title: "TurnosApp",
     subtitle: 'Selecciona fecha y hora',
     available: 'Disponible',
     booked: 'Ocupado',
@@ -19,7 +19,7 @@ export const es = {
   },
   confirm: {
     title: '¡Reserva Confirmada!',
-    subtitle: 'Te esperamos en la barbería',
+    subtitle: 'Tu turno ha sido reservado',
     name: 'Nombre',
     phone: 'Teléfono',
     date: 'Fecha',

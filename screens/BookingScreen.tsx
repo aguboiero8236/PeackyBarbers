@@ -89,7 +89,7 @@ export default function BookingScreen({ navigation, route }: BookingScreenProps)
               setError('');
             }}
             placeholder={t.namePlaceholder}
-            placeholderTextColor="#666"
+            placeholderTextColor="#64748b"
             autoCapitalize="words"
           />
           
@@ -102,7 +102,7 @@ export default function BookingScreen({ navigation, route }: BookingScreenProps)
               setError('');
             }}
             placeholder={t.phonePlaceholder}
-            placeholderTextColor="#666"
+            placeholderTextColor="#64748b"
             keyboardType="phone-pad"
           />
           
@@ -120,7 +120,7 @@ export default function BookingScreen({ navigation, route }: BookingScreenProps)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#0f172a',
   },
   scrollContent: {
     padding: 20,
@@ -133,26 +133,26 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   backButtonText: {
-    color: '#d4af37',
+    color: '#3b82f6',
     fontSize: 16,
     fontWeight: '500',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#d4af37',
+    color: '#3b82f6',
   },
   summaryCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderRadius: 12,
     padding: 20,
     marginBottom: 30,
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#888',
+    color: '#94a3b8',
     marginBottom: 8,
   },
   summaryDate: {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   summaryTime: {
     fontSize: 24,
-    color: '#d4af37',
+    color: '#3b82f6',
     fontWeight: 'bold',
   },
   form: {
@@ -171,32 +171,32 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: '#888',
+    color: '#94a3b8',
     marginBottom: 8,
     marginTop: 16,
   },
   input: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     color: '#fff',
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
   },
   error: {
-    color: '#f44336',
+    color: '#ef4444',
     fontSize: 14,
     marginTop: 12,
   },
   confirmButton: {
-    backgroundColor: '#d4af37',
+    backgroundColor: '#3b82f6',
     borderRadius: 12,
     padding: 18,
     alignItems: 'center',
   },
   confirmButtonText: {
-    color: '#1a1a1a',
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },

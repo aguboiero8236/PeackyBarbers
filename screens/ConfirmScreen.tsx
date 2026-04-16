@@ -15,8 +15,8 @@ type ConfirmScreenProps = {
 
 const formatDateDisplay = (dateStr: string): string => {
   const [year, month, day] = dateStr.split('-');
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${months[parseInt(month, 10) - 1]} ${parseInt(day, 10)}, ${year}`;
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  return `${parseInt(day, 10)} de ${months[parseInt(month, 10) - 1]}`;
 };
 
 const formatTime = (time: string): string => {
@@ -81,7 +81,7 @@ export default function ConfirmScreen({ navigation, route }: ConfirmScreenProps)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#0f172a',
     padding: 20,
     paddingTop: 80,
   },
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#10b981',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -111,16 +111,16 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: '#94a3b8',
     marginBottom: 40,
   },
   detailsCard: {
     width: '100%',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
   },
   detailRow: {
     flexDirection: 'row',
@@ -128,11 +128,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
+    borderBottomColor: '#334155',
   },
   detailLabel: {
     fontSize: 14,
-    color: '#888',
+    color: '#94a3b8',
   },
   detailValue: {
     fontSize: 16,
@@ -140,18 +140,18 @@ const styles = StyleSheet.create({
   },
   detailValueHighlight: {
     fontSize: 18,
-    color: '#d4af37',
+    color: '#3b82f6',
     fontWeight: 'bold',
   },
   doneButton: {
-    backgroundColor: '#d4af37',
+    backgroundColor: '#3b82f6',
     borderRadius: 12,
     padding: 18,
     alignItems: 'center',
     marginBottom: 20,
   },
   doneButtonText: {
-    color: '#1a1a1a',
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },

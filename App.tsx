@@ -17,7 +17,7 @@ export default function App() {
         initialRouteName="Home"
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#1a1a1a' },
+          contentStyle: { backgroundColor: '#0f172a' },
           animation: 'slide_from_right',
         }}
       >

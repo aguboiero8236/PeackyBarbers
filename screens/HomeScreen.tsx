@@ -150,7 +150,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#0f172a',
   },
   header: {
     padding: 20,
@@ -173,21 +173,21 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   logoButton: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     padding: 8,
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#d4af37',
+    color: '#3b82f6',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: '#94a3b8',
   },
   dateContainer: {
     paddingHorizontal: 16,
@@ -198,13 +198,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginRight: 8,
     borderRadius: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
   },
   dateButtonSelected: {
-    backgroundColor: '#d4af37',
-    borderColor: '#d4af37',
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
   },
   dateText: {
     fontSize: 14,
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   dateTextSelected: {
-    color: '#1a1a1a',
+    color: '#fff',
   },
   slotsContainer: {
     paddingHorizontal: 16,
@@ -225,13 +225,13 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderRadius: 12,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1e293b',
     borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderColor: '#334155',
   },
   slotButtonBooked: {
-    backgroundColor: '#222',
-    borderColor: '#333',
+    backgroundColor: '#0f172a',
+    borderColor: '#1e293b',
     opacity: 0.6,
   },
   slotTime: {
@@ -240,19 +240,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   slotTimeBooked: {
-    color: '#666',
+    color: '#64748b',
   },
   slotStatus: {
     fontSize: 14,
-    color: '#4CAF50',
+    color: '#10b981',
     fontWeight: '500',
   },
   slotStatusBooked: {
-    color: '#f44336',
+    color: '#ef4444',
   },
   noSlots: {
     textAlign: 'center',
-    color: '#666',
+    color: '#64748b',
     fontSize: 16,
     marginTop: 40,
   },
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#d4af37',
+    color: '#3b82f6',
     fontSize: 18,
   },
 });
