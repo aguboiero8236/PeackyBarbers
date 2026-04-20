@@ -1,5 +1,5 @@
-import { addDoc, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
-import { bookingsCollection } from '../firebase';
+import { addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { bookingsCollection, unavailableCollection } from '../firebase';
 import { AppointmentSlot, BookingData } from '../types';
 
 export const saveBooking = async (booking: BookingData): Promise<boolean> => {
@@ -62,6 +62,63 @@ export const cancelBooking = async (slotId: string): Promise<boolean> => {
     return false;
   } catch (error) {
     console.error('Error canceling booking:', error);
+    return false;
+  }
+};
+
+export const getUnavailableSlots = async (): Promise<AppointmentSlot[]> => {
+  try {
+    const querySnapshot = await getDocs(unavailableCollection);
+    
+    const slots: AppointmentSlot[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      slots.push({
+        id: data.slotId,
+        date: data.date,
+        time: data.time,
+        isBooked: false,
+        isUnavailable: true,
+        unavailableReason: data.reason || 'No disponible',
+      });
+    });
+    
+    slots.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.time.localeCompare(b.time);
+    });
+    
+    return slots;
+  } catch (error) {
+    console.error('Error getting unavailable slots:', error);
+    return [];
+  }
+};
+
+export const setUnavailable = async (slot: AppointmentSlot, reason: string): Promise<boolean> => {
+  try {
+    const slotId = `${slot.date}_${slot.time}`;
+    await setDoc(doc(unavailableCollection, slotId), {
+      slotId: slot.id,
+      date: slot.date,
+      time: slot.time,
+      reason: reason,
+      createdAt: new Date().toISOString(),
+    });
+    return true;
+  } catch (error) {
+    console.error('Error setting unavailable:', error);
+    return false;
+  }
+};
+
+export const removeUnavailable = async (slot: AppointmentSlot): Promise<boolean> => {
+  try {
+    const slotId = `${slot.date}_${slot.time}`;
+    await deleteDoc(doc(unavailableCollection, slotId));
+    return true;
+  } catch (error) {
+    console.error('Error removing unavailable:', error);
     return false;
   }
 };

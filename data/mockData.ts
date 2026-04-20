@@ -104,4 +104,4 @@ export const cancelSlot = async (slotId: string): Promise<boolean> => {
   return false;
 };
 
-export { formatDate, formatDisplayDate, TIME_SLOTS };
+export { formatDate, formatDisplayDate, TIME_SLOTS, generateSlots };

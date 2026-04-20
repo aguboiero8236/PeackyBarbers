@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCcbZDyNDDwd-F_rOdXBhYPaf2Y2ZmAVa8",
@@ -15,3 +15,4 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
 export const bookingsCollection = collection(db, 'bookings');
+export const unavailableCollection = collection(db, 'unavailable');

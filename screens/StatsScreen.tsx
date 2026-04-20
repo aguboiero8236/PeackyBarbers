@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, AppointmentSlot } from '../types';
-import { getAllBookings } from '../services/bookingService';
+import { getAllBookings, getUnavailableSlots } from '../services/bookingService';
 
 type StatsScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Stats'>;
@@ -45,6 +45,10 @@ export default function StatsScreen({ navigation }: StatsScreenProps) {
     lastMonth: 0,
     lastYear: 0,
     total: 0,
+    unavailableLastWeek: 0,
+    unavailableLastMonth: 0,
+    unavailableLastYear: 0,
+    unavailableTotal: 0,
   });
 
   useEffect(() => {
@@ -54,7 +58,11 @@ export default function StatsScreen({ navigation }: StatsScreenProps) {
   const loadStats = async () => {
     setLoading(true);
     try {
+      console.log('Loading bookings and unavailable slots...');
       const bookings = await getAllBookings();
+      console.log('Bookings loaded:', bookings.length);
+      const unavailable = await getUnavailableSlots();
+      console.log('Unavailable loaded:', unavailable.length);
       
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -71,6 +79,9 @@ export default function StatsScreen({ navigation }: StatsScreenProps) {
       let lastWeek = 0;
       let lastMonth = 0;
       let lastYear = 0;
+      let unavailableLastWeek = 0;
+      let unavailableLastMonth = 0;
+      let unavailableLastYear = 0;
 
       bookings.forEach(booking => {
         const [year, month, day] = booking.date.split('-').map(Number);
@@ -87,11 +98,30 @@ export default function StatsScreen({ navigation }: StatsScreenProps) {
         }
       });
 
+      unavailable.forEach(slot => {
+        const [year, month, day] = slot.date.split('-').map(Number);
+        const slotDate = new Date(year, month - 1, day);
+        
+        if (slotDate >= weekAgo) {
+          unavailableLastWeek++;
+        }
+        if (slotDate >= monthAgo) {
+          unavailableLastMonth++;
+        }
+        if (slotDate >= yearAgo) {
+          unavailableLastYear++;
+        }
+      });
+
       setStats({
         lastWeek,
         lastMonth,
         lastYear,
         total: bookings.length,
+        unavailableLastWeek,
+        unavailableLastMonth,
+        unavailableLastYear,
+        unavailableTotal: unavailable.length,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -106,7 +136,7 @@ export default function StatsScreen({ navigation }: StatsScreenProps) {
   };
 
   const handleGoToReservas = () => {
-    navigation.navigate('Admin');
+    navigation.navigate('Admin', { isPreAuthenticated: true });
   };
 
   const weeklyAverage = useMemo(() => {
@@ -161,6 +191,37 @@ export default function StatsScreen({ navigation }: StatsScreenProps) {
               value={stats.total}
               subtitle="Todos los turnos"
               color="#d4af37"
+            />
+          </View>
+
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Turnos No Disponibles</Text>
+          
+          <View style={styles.statsGrid}>
+            <StatCard
+              title="Última Semana"
+              value={stats.unavailableLastWeek}
+              subtitle="No disponibles"
+              color="#e74c3c"
+            />
+            <StatCard
+              title="Último Mes"
+              value={stats.unavailableLastMonth}
+              subtitle="No disponibles"
+              color="#e67e22"
+            />
+            <StatCard
+              title="Último Año"
+              value={stats.unavailableLastYear}
+              subtitle="No disponibles"
+              color="#c0392b"
+            />
+            <StatCard
+              title="Total Histórico"
+              value={stats.unavailableTotal}
+              subtitle="No disponibles"
+              color="#e74c3c"
             />
           </View>
 

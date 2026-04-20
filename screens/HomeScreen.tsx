@@ -13,6 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { getSlotsForDate, formatDate, formatDisplayDate, initializeSlots } from '../data/mockData';
 import { RootStackParamList, AppointmentSlot } from '../types';
 import { translations } from '../i18n';
+import { getUnavailableSlots } from '../services/bookingService';
 
 const t = translations.home;
 
@@ -47,18 +48,38 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [selectedDate, setSelectedDate] = useState<string>(formatDate(new Date()));
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [unavailableSlots, setUnavailableSlots] = useState<AppointmentSlot[]>([]);
   
   useEffect(() => {
-    initializeSlots().then(() => setIsLoading(false)).catch(console.error);
+    const loadData = async () => {
+      await initializeSlots();
+      const unavailable = await getUnavailableSlots();
+      setUnavailableSlots(unavailable);
+      setIsLoading(false);
+    };
+    loadData().catch(console.error);
   }, []);
   
   useFocusEffect(
     useCallback(() => {
-      initializeSlots().then(() => setRefreshKey(prev => prev + 1)).catch(console.error);
+      const loadData = async () => {
+        await initializeSlots();
+        const unavailable = await getUnavailableSlots();
+        setUnavailableSlots(unavailable);
+        setRefreshKey(prev => prev + 1);
+      };
+      loadData().catch(console.error);
     }, [])
   );
 
-  const slots = useMemo(() => getSlotsForDate(selectedDate), [selectedDate, refreshKey]);
+  const slots = useMemo(() => {
+    const allSlots = getSlotsForDate(selectedDate);
+    const unavailableIds = new Set(unavailableSlots.map(u => u.id));
+    return allSlots.map(slot => ({
+      ...slot,
+      isUnavailable: unavailableIds.has(slot.id),
+    }));
+  }, [selectedDate, refreshKey, unavailableSlots]);
 
   const handleSlotPress = (slot: AppointmentSlot) => {
     if (!slot.isBooked) {
@@ -67,7 +88,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   const handleAdminPress = () => {
-    navigation.navigate('Admin');
+    navigation.navigate('Admin', { isPreAuthenticated: false });
   };
 
   const renderDate = (date: Date) => {
@@ -88,19 +109,40 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   const renderSlot = ({ item }: { item: AppointmentSlot }) => {
-    const isAvailable = !item.isBooked;
+    const isAvailable = !item.isBooked && !item.isUnavailable;
+    const isUnavailable = item.isUnavailable;
+    
+    const buttonStyle = [
+      styles.slotButton,
+      !isAvailable && styles.slotButtonBooked,
+      isUnavailable && styles.slotButtonUnavailable,
+    ];
+    
+    const timeStyle = [
+      styles.slotTime,
+      !isAvailable && styles.slotTimeBooked,
+      isUnavailable && styles.slotTimeUnavailable,
+    ];
+    
+    const statusStyle = [
+      styles.slotStatus,
+      !isAvailable && styles.slotStatusBooked,
+      isUnavailable && styles.slotStatusUnavailable,
+    ];
+    
+    const statusText = isUnavailable ? 'No disponible' : (isAvailable ? t.available : t.booked);
     
     return (
       <TouchableOpacity
-        style={[styles.slotButton, !isAvailable && styles.slotButtonBooked]}
+        style={buttonStyle}
         onPress={() => handleSlotPress(item)}
         disabled={!isAvailable}
       >
-        <Text style={[styles.slotTime, !isAvailable && styles.slotTimeBooked]}>
+        <Text style={timeStyle}>
           {formatTime(item.time)}
         </Text>
-        <Text style={[styles.slotStatus, !isAvailable && styles.slotStatusBooked]}>
-          {isAvailable ? t.available : t.booked}
+        <Text style={statusStyle}>
+          {statusText}
         </Text>
       </TouchableOpacity>
     );
@@ -234,12 +276,20 @@ const styles = StyleSheet.create({
     borderColor: '#333',
     opacity: 0.6,
   },
+  slotButtonUnavailable: {
+    backgroundColor: '#3a2a2a',
+    borderColor: '#5a3a3a',
+    opacity: 0.6,
+  },
   slotTime: {
     fontSize: 18,
     color: '#fff',
     fontWeight: '600',
   },
   slotTimeBooked: {
+    color: '#666',
+  },
+  slotTimeUnavailable: {
     color: '#666',
   },
   slotStatus: {
@@ -249,6 +299,9 @@ const styles = StyleSheet.create({
   },
   slotStatusBooked: {
     color: '#f44336',
+  },
+  slotStatusUnavailable: {
+    color: '#e67e22',
   },
   noSlots: {
     textAlign: 'center',

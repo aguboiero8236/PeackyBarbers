@@ -14,11 +14,12 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList, AppointmentSlot } from '../types';
-import { getAllBookings } from '../services/bookingService';
-import { formatDate, formatDisplayDate, cancelSlot } from '../data/mockData';
+import { getAllBookings, getUnavailableSlots, setUnavailable, removeUnavailable } from '../services/bookingService';
+import { formatDate, formatDisplayDate, cancelSlot, generateSlots } from '../data/mockData';
 
 type AdminScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Admin'>;
+  route: any;
 };
 
 const ADMIN_PIN = '0212';
@@ -42,17 +43,27 @@ const formatTime = (time: string): string => {
   return `${displayHour}:${minutes} ${ampm}`;
 };
 
-export default function AdminScreen({ navigation }: AdminScreenProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export default function AdminScreen({ navigation, route }: AdminScreenProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState(route?.params?.isPreAuthenticated || false);
   const [pin, setPin] = useState('');
   const [bookings, setBookings] = useState<AppointmentSlot[]>([]);
+  const [unavailableSlots, setUnavailableSlots] = useState<AppointmentSlot[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<AppointmentSlot[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelItem, setCancelItem] = useState<AppointmentSlot | null>(null);
+  const [currentView, setCurrentView] = useState<'bookings' | 'unavailable'>('bookings');
+  const [showUnavailableModal, setShowUnavailableModal] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<AppointmentSlot | null>(null);
+  const [unavailableReason, setUnavailableReason] = useState('');
+  const [actionItem, setActionItem] = useState<AppointmentSlot | null>(null);
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [actionType, setActionType] = useState<'cancel' | 'unavailable' | null>(null);
 
   const bookedDates = useMemo(() => {
-    const uniqueDates = [...new Set(bookings.map(b => b.date))];
+    const allSlots = [...availableSlots, ...bookings, ...unavailableSlots];
+    const uniqueDates = [...new Set(allSlots.map(b => b.date))];
     const filteredDates = uniqueDates.filter(dateStr => {
       const [year, month, day] = dateStr.split('-').map(Number);
       const date = new Date(year, month - 1, day);
@@ -60,7 +71,7 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
       return dayOfWeek !== 0 && dayOfWeek !== 6;
     });
     return filteredDates.sort();
-  }, [bookings]);
+  }, [availableSlots, bookings, unavailableSlots]);
 
   const handlePinSubmit = () => {
     if (pin === ADMIN_PIN) {
@@ -73,12 +84,25 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
 
   const loadBookings = async () => {
     const data = await getAllBookings();
+    const unavailable = await getUnavailableSlots();
     const today = new Date().toISOString().split('T')[0];
     const filteredData = data.filter(b => b.date >= today);
+    const filteredUnavailable = unavailable.filter(b => b.date >= today);
     setBookings(filteredData);
+    setUnavailableSlots(filteredUnavailable);
     
-    if (filteredData.length > 0) {
-      const uniqueDates = [...new Set(filteredData.map(b => b.date))];
+    const allGeneratedSlots = generateSlots().filter(s => s.date >= today);
+    const bookedIds = new Set(filteredData.map(b => b.id));
+    const unavailableIds = new Set(filteredUnavailable.map(u => u.id));
+    
+    const available = allGeneratedSlots
+      .filter(s => !bookedIds.has(s.id) && !unavailableIds.has(s.id))
+      .map(s => ({ ...s, isBooked: false }));
+    setAvailableSlots(available);
+    
+    const allSlots = [...filteredData, ...filteredUnavailable, ...available];
+    if (allSlots.length > 0) {
+      const uniqueDates = [...new Set(allSlots.map(b => b.date))];
       const filteredDates = uniqueDates.filter(dateStr => {
         const [year, month, day] = dateStr.split('-').map(Number);
         const date = new Date(year, month - 1, day);
@@ -130,10 +154,45 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     return bookings.filter(booking => booking.date === selectedDate);
   }, [bookings, selectedDate, refreshKey]);
 
-  const handleCancelBooking = useCallback((item: AppointmentSlot) => {
-    setCancelItem(item);
-    setShowCancelModal(true);
-  }, []);
+  const allSlotsForDate = useMemo(() => {
+    return [...availableSlots, ...bookings]
+      .filter(slot => slot.date === selectedDate)
+      .sort((a, b) => a.time.localeCompare(b.time));
+  }, [availableSlots, bookings, unavailableSlots, selectedDate, refreshKey]);
+
+const handleCancelBooking = (item: AppointmentSlot) => {
+    setActionItem(item);
+    setActionType('cancel');
+  };
+
+  const handleToggleUnavailable = (item: AppointmentSlot) => {
+    setActionItem(item);
+    setActionType('unavailable');
+  };
+
+  const executeAction = () => {
+    if (!actionItem || !actionType) return;
+    
+    if (actionType === 'cancel') {
+      cancelSlot(actionItem.id).then((success) => {
+        if (success) {
+          loadBookings();
+        }
+      });
+    } else if (actionType === 'unavailable') {
+      const slotToSave = { ...actionItem, isUnavailable: true };
+      setUnavailable(slotToSave, 'No disponible').then(() => {
+        if (actionItem.bookedBy) {
+          cancelSlot(actionItem.id).then(() => loadBookings());
+        } else {
+          loadBookings();
+        }
+      });
+    }
+    
+    setActionItem(null);
+    setActionType(null);
+  };
 
   const confirmCancelBooking = useCallback(async () => {
     if (!cancelItem) return;
@@ -152,23 +211,146 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     setCancelItem(null);
   }, [cancelItem]);
 
+  const confirmSetUnavailable = useCallback(async () => {
+    if (!selectedSlot) return;
+    
+    setShowUnavailableModal(false);
+    
+    const slotToSave = { ...selectedSlot, isUnavailable: true };
+    const success = await setUnavailable(slotToSave, unavailableReason);
+    
+    let cancelSuccess = true;
+    if (selectedSlot.bookedBy) {
+      cancelSuccess = await cancelSlot(selectedSlot.id);
+    }
+    
+    if (success || cancelSuccess) {
+      loadBookings();
+    }
+    
+    setSelectedSlot(null);
+    setUnavailableReason('');
+  }, [selectedSlot, unavailableReason]);
+
+  const confirmRemoveUnavailable = useCallback(async (item: AppointmentSlot) => {
+    const success = await removeUnavailable(item);
+    if (success) {
+      const today = new Date().toISOString().split('T')[0];
+      const data = (await getUnavailableSlots()).filter(b => b.date >= today);
+      setUnavailableSlots(data);
+    } else {
+      Alert.alert('Error', 'No se pudo habilitar el turno');
+    }
+  }, []);
+
   const renderBooking = ({ item }: { item: AppointmentSlot }) => {
     return (
-      <TouchableOpacity 
-        style={[styles.slotButton, styles.slotButtonBooked]}
-        onPress={() => handleCancelBooking(item)}
-        activeOpacity={0.8}
-      >
-        <View style={styles.bookingInfo}>
+      <View style={[styles.slotButton, styles.slotButtonBooked]}>
+        <TouchableOpacity 
+          style={styles.bookingInfo}
+          onPress={() => handleCancelBooking(item)}
+          activeOpacity={0.8}
+        >
           <Text style={styles.slotTime}>{formatTime(item.time)}</Text>
           <Text style={styles.slotStatus}>
             {item.bookedBy?.name || 'Reservado'} - {item.bookedBy?.phone || ''}
           </Text>
+        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity 
+            style={styles.unavailableButton}
+            onPress={() => {
+              setSelectedSlot(item);
+              setShowUnavailableModal(true);
+            }}
+          >
+            <Text style={styles.unavailableButtonText}>∅</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.cancelButton}
+            onPress={() => handleCancelBooking(item)}
+          >
+            <Text style={styles.cancelButtonText}>✕</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.cancelButton}>
-          <Text style={styles.cancelButtonText}>✕</Text>
+      </View>
+    );
+  };
+
+  const renderSlot = ({ item }: { item: AppointmentSlot }) => {
+    const isBooked = item.bookedBy !== undefined;
+    const isUnavailable = item.isUnavailable;
+    
+    if (isUnavailable) {
+      return (
+        <View style={[styles.slotButton, styles.slotButtonUnavailable]}>
+          <TouchableOpacity 
+            style={styles.bookingInfo}
+            onPress={() => handleToggleUnavailable(item)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.slotTime}>{formatTime(item.time)}</Text>
+            <Text style={styles.slotStatus}>
+              {item.unavailableReason || 'No disponible'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.enableButton}
+            onPress={() => handleToggleUnavailable(item)}
+          >
+            <Text style={styles.enableButtonText}>✓</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      );
+    }
+    
+    if (isBooked) {
+      return (
+        <View style={[styles.slotButton, styles.slotButtonBooked]}>
+          <View style={styles.bookingInfo}>
+            <Text style={styles.slotTime}>{formatTime(item.time)}</Text>
+            <Text style={styles.slotStatus}>
+              {item.bookedBy?.name || 'Reservado'} - {item.bookedBy?.phone || ''}
+            </Text>
+          </View>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.unavailableButton} onPress={() => handleToggleUnavailable(item)}>
+              <Text style={styles.unavailableButtonText}>∅</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => handleCancelBooking(item)}>
+              <Text style={styles.cancelButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={[styles.slotButton, styles.slotButtonAvailable]}>
+        <View style={styles.bookingInfo}>
+          <Text style={styles.slotTime}>{formatTime(item.time)}</Text>
+          <Text style={styles.slotStatus}>Disponible</Text>
+        </View>
+<TouchableOpacity style={styles.unavailableButton} onPress={() => handleToggleUnavailable(item)}>
+          <Text style={styles.unavailableButtonText}>∅</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderUnavailable = ({ item }: { item: AppointmentSlot }) => {
+    return (
+      <View style={[styles.slotButton, styles.slotButtonUnavailable]}>
+        <View style={styles.bookingInfo}>
+          <Text style={styles.slotTime}>{formatTime(item.time)}</Text>
+          <Text style={styles.slotStatus}>
+            {item.unavailableReason || 'No disponible'}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.enableButton} onPress={() => handleToggleUnavailable(item)}>
+          <Text style={styles.enableButtonText}>✓</Text>
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -208,9 +390,29 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
         <TouchableOpacity onPress={handleBack}>
           <Text style={styles.backButton}>← Volver</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Reservas</Text>
+        <Text style={styles.title}>
+          {currentView === 'bookings' ? 'Reservas' : 'No Disponibles'}
+        </Text>
         <TouchableOpacity onPress={handleGoToStats}>
           <Text style={styles.statsButton}>Estadísticas</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.viewToggle}>
+        <TouchableOpacity
+          style={[styles.toggleButton, currentView === 'bookings' && styles.toggleButtonActive]}
+          onPress={() => setCurrentView('bookings')}
+        >
+          <Text style={[styles.toggleText, currentView === 'bookings' && styles.toggleTextActive]}>
+            Reservas
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleButton, currentView === 'unavailable' && styles.toggleButtonActive]}
+          onPress={() => setCurrentView('unavailable')}
+        >
+          <Text style={[styles.toggleText, currentView === 'unavailable' && styles.toggleTextActive]}>
+            No Disp.
+          </Text>
         </TouchableOpacity>
       </View>
       
@@ -221,12 +423,14 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
       </View>
       
       <FlatList
-        data={filteredBookings}
-        renderItem={renderBooking}
+        data={currentView === 'bookings' ? allSlotsForDate : unavailableSlots.filter(s => s.date === selectedDate).sort((a, b) => a.time.localeCompare(b.time))}
+        renderItem={currentView === 'bookings' ? renderSlot : renderUnavailable}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.slotsContainer}
         ListEmptyComponent={
-          <Text style={styles.noSlots}>No hay reservas</Text>
+          <Text style={styles.noSlots}>
+            {currentView === 'bookings' ? 'No hay turnos' : 'No hay turnos no disponibles'}
+          </Text>
         }
       />
 
@@ -254,6 +458,46 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
                 onPress={confirmCancelBooking}
               >
                 <Text style={styles.modalButtonConfirmText}>Si</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={actionItem !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setActionItem(null);
+          setActionType(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              {actionType === 'cancel' ? 'Cancelar Reserva' : 'No Disponible'}
+            </Text>
+            <Text style={styles.modalText}>
+              {actionType === 'cancel' 
+                ? `¿Cancelar la reserva de ${actionItem?.bookedBy?.name || 'este cliente'}?`
+                : '¿Marcar este turno como no disponible?'}
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => {
+                  setActionItem(null);
+                  setActionType(null);
+                }}
+              >
+                <Text style={styles.modalButtonCancelText}>No</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={executeAction}
+              >
+                <Text style={styles.modalButtonConfirmText}>Sí</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -290,6 +534,33 @@ statsButton: {
     color: '#d4af37',
     fontWeight: '600',
     marginLeft: 16,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 8,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#d4af37',
+    borderColor: '#d4af37',
+  },
+  toggleText: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  toggleTextActive: {
+    color: '#1a1a1a',
   },
   pinContainer: {
     flex: 1,
@@ -369,6 +640,16 @@ statsButton: {
     backgroundColor: '#222',
     borderColor: '#333',
     opacity: 0.8,
+  },
+  slotButtonUnavailable: {
+    backgroundColor: '#3a2a2a',
+    borderColor: '#5a3a3a',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  slotButtonAvailable: {
+    backgroundColor: '#2a2a2a',
+    borderColor: '#3a3a3a',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -391,12 +672,54 @@ statsButton: {
     backgroundColor: '#e74c3c',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 12,
+    marginLeft: 8,
   },
   cancelButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  unavailableButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e67e22',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  unavailableButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  enableButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#27ae60',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  enableButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  reasonInput: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 16,
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   noSlots: {
     textAlign: 'center',

@@ -3,6 +3,8 @@ export interface AppointmentSlot {
   date: string;
   time: string;
   isBooked: boolean;
+  isUnavailable?: boolean;
+  unavailableReason?: string;
   bookedBy?: {
     name: string;
     phone: string;
@@ -19,6 +21,6 @@ export type RootStackParamList = {
   Home: undefined;
   Booking: { slot: AppointmentSlot };
   Confirm: { booking: BookingData };
-  Admin: undefined;
+  Admin: { isPreAuthenticated?: boolean };
   Stats: undefined;
 };
