@@ -20,4 +20,5 @@ export type RootStackParamList = {
   Booking: { slot: AppointmentSlot };
   Confirm: { booking: BookingData };
   Admin: undefined;
+  Stats: undefined;
 };

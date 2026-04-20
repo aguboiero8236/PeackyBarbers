@@ -7,6 +7,7 @@ import HomeScreen from './screens/HomeScreen';
 import BookingScreen from './screens/BookingScreen';
 import ConfirmScreen from './screens/ConfirmScreen';
 import AdminScreen from './screens/AdminScreen';
+import StatsScreen from './screens/StatsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -25,6 +26,7 @@ export default function App() {
         <Stack.Screen name="Booking" component={BookingScreen} />
         <Stack.Screen name="Confirm" component={ConfirmScreen} />
         <Stack.Screen name="Admin" component={AdminScreen} />
+        <Stack.Screen name="Stats" component={StatsScreen} />
       </Stack.Navigator>
       <StatusBar style="light" />
     </NavigationContainer>

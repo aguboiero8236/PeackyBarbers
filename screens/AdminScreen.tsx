@@ -104,6 +104,10 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
     navigation.goBack();
   };
 
+  const handleGoToStats = () => {
+    navigation.navigate('Stats');
+  };
+
   const renderDate = (dateStr: string) => {
     const isSelected = dateStr === selectedDate;
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -205,6 +209,9 @@ export default function AdminScreen({ navigation }: AdminScreenProps) {
           <Text style={styles.backButton}>← Volver</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Reservas</Text>
+        <TouchableOpacity onPress={handleGoToStats}>
+          <Text style={styles.statsButton}>Estadísticas</Text>
+        </TouchableOpacity>
       </View>
       
       <View style={styles.dateContainer}>
@@ -266,6 +273,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   backButton: {
     color: '#d4af37',
@@ -276,6 +284,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#d4af37',
+  },
+statsButton: {
+    fontSize: 14,
+    color: '#d4af37',
+    fontWeight: '600',
+    marginLeft: 16,
   },
   pinContainer: {
     flex: 1,
